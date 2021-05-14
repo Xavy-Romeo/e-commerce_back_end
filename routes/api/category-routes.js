@@ -12,7 +12,7 @@ router.get('/', (req, res) => {
     include: [
       {
         model: Product,
-        attributes:['id', 'product_name', 'price', 'stock', 'category_id']
+        attributes: ['id', 'product_name', 'price', 'stock', 'category_id']
       }
     ]
   })
@@ -26,7 +26,6 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
   // find one category by its `id` value
   // be sure to include its associated Products
-  
   Category.findOne({
     where: {
       id: req.params.id
@@ -35,7 +34,7 @@ router.get('/:id', (req, res) => {
     include: [
       {
         model: Product,
-        attributes:['id', 'product_name', 'price', 'stock', 'category_id']
+        attributes: ['id', 'product_name', 'price', 'stock', 'category_id']
       }
     ]
   })
@@ -55,15 +54,67 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', (req, res) => {
+  /* req.body should look like this...
+    {
+      category_name: "Sports"
+    }
+  */
+  
   // create a new category
+  Category.create(req.body)
+  .then(dbCategoryData => res.json({message: `Category ${req.body.category_name} was created!`, dbCategoryData}))
+  .catch(err => {
+    console.log(err);
+    res.status(500).json(err);
+  });
 });
 
 router.put('/:id', (req, res) => {
   // update a category by its `id` value
+  Category.update(req.body,
+    {
+      where: {
+        id: req.params.id
+      }
+    }
+  )
+  .then(async() => {    
+    const id = await Category.findOne({
+      where: {
+        id: req.params.id
+      }
+    });
+
+    if (!id) {
+      res.status(404).json({message: 'No category found with this id!'});
+      return;
+    }
+    res.json({message: `Updated category name to ${req.body.category_name}!`});
+  })
+  .catch(err => {
+    console.log(err);
+    res.status(500).json(err);
+  });
 });
 
 router.delete('/:id', (req, res) => {
   // delete a category by its `id` value
+  Category.destroy({
+    where: {
+      id: req.params.id
+    }
+  })
+  .then(dbCategoryData => {
+    if (!dbCategoryData) {
+      res.status(404).json({message: 'No category found with this id!'});
+      return;
+    }
+    res.json({message: 'Category deleted!'});
+  })
+  .catch(err => {
+    console.log(err);
+    res.status(500).json(err);
+  });
 });
 
 module.exports = router;
